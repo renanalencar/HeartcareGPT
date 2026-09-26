@@ -1,9 +1,11 @@
-import numpy as np
+from math import gcd
+
 import neurokit2 as nk
+import numpy as np
 import scipy.signal
 import wfdb
 from tqdm import tqdm
-from math import gcd
+
 
 def resample(ecg, original_rate, target_rate):
     factor = gcd(original_rate, target_rate)

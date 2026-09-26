@@ -1,0 +1,38 @@
+[project]
+name = "heartcaregpt"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "einops>=0.8.2",
+    "einx>=0.4.3",
+    "future>=1.0.0",
+    "matplotlib>=3.11.2",
+    "neurokit2>=0.2.12",
+    "numpy>=2.5.3",
+    "openai>=3.19.2",
+    "pandas>=3.0.6",
+    "pathlib>=1.0.1",
+    "peft>=0.21.0",
+    "scipy>=1.18.1",
+    "setuptools>=84.0.0",
+    "tensorboard>=2.21.0",
+    "torch>=2.6.0",
+    "torchaudio>=2.6.0",
+    "torchvision>=0.21.0",
+    "tqdm>=4.70.1",
+    "typing>=3.10.0.0",
+    "wfdb>=4.3.1",
+    "x-transformers>=2.31.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu124" }]
+torchvision = [{ index = "pytorch-cu124" }]
+torchaudio = [{ index = "pytorch-cu124" }]

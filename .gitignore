@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environment
+.venv/
+.env
+
+# Raw / processed ECG data (large, downloaded separately)
+data/records100/
+data/records500/
+data/records250/
+data/ekg/
+data/qa_dataset/
+*.npy
+
+# Training artifacts
+beat/
+beat_joint/
+model/
+runs/
+*.pth
