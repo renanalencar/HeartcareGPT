@@ -90,20 +90,6 @@ class Tokenizer(Module):
         b, c, t = sequence.shape
         segments, pad_lens = [], []
         start = t
-        while start > 0:
-            end = max(0, start - self.seq_length)
-            seg = sequence[..., end:start]
-            pad = max(0, self.seq_length - seg.shape[-1])
-            seg = F.pad(seg, (pad, 0))
-            segments.append(seg)
-            pad_lens.append(pad)
-            start -= self.seq_length
-        return segments[::-1], pad_lens[::-1]
-    
-    def preprocess_sequence(self, sequence):
-        b, c, t = sequence.shape
-        segments, pad_lens = [], []
-        start = t
 
         if t == 0:
             pad = self.seq_length
