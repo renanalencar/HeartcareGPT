@@ -1,10 +1,17 @@
+import warnings
 from math import gcd
 
 import neurokit2 as nk
 import numpy as np
 import scipy.signal
 import wfdb
+from pandas.errors import ChainedAssignmentError
 from tqdm import tqdm
+
+# neurokit2's epochs_create() (used internally by nk.ecg_quality) relies on a
+# chained inplace assignment that is a no-op under pandas>=3 Copy-on-Write.
+# It only affects zero-padding at epoch boundaries, so it's safe to silence.
+warnings.filterwarnings("ignore", category=ChainedAssignmentError)
 
 
 def resample(ecg, original_rate, target_rate):
@@ -13,6 +20,7 @@ def resample(ecg, original_rate, target_rate):
     down = original_rate // factor
     ecg_resampled = scipy.signal.resample_poly(ecg, up, down)
     return ecg_resampled
+
 
 def max_quality(quality, length):
     cumsum = np.cumsum(quality)
@@ -31,6 +39,7 @@ def max_quality(quality, length):
 
     return max_start
 
+
 def process_ecg(ecg, total_length=None, sampling_rate=250):
     quality = None
     if not total_length:
@@ -47,7 +56,8 @@ def process_ecg(ecg, total_length=None, sampling_rate=250):
     else:
         start = max_quality(quality, total_length)
 
-    return ecg[:, start:start+total_length]
+    return ecg[:, start : start + total_length]
+
 
 def normalize(X, seq_length):
     X_mean = np.mean(X[:, :seq_length], axis=-1, keepdims=1)
@@ -55,22 +65,25 @@ def normalize(X, seq_length):
     # X_std = np.std(X, axis=-1, keepdims=1)
     # X_norm = (X - X_mean) / (X_std + 1e-6)
 
-    X_centered = (X - X_mean)
+    X_centered = X - X_mean
     X_std = np.std(X_centered[:, :seq_length])
     X_norm = X_centered / (X_std + 1e-6)
 
     return X_norm
 
+
 def load_raw_data(df, path, sampling_rate, target_rate=250):
     data = []
     filename = df.filename_hr
     for f in tqdm(filename):
-        sample, _ = wfdb.rdsamp(path+f)
+        sample, _ = wfdb.rdsamp(path + f)
         channel = []
         for col in range(sample.shape[1]):
             ecg = sample[:, col]
             if sampling_rate != target_rate:
-                ecg_resampled = resample(ecg, original_rate=sampling_rate, target_rate=target_rate)
+                ecg_resampled = resample(
+                    ecg, original_rate=sampling_rate, target_rate=target_rate
+                )
             ecg_cleaned = nk.ecg_clean(ecg_resampled, sampling_rate=target_rate)
             channel.append(ecg_cleaned)
 
@@ -79,10 +92,13 @@ def load_raw_data(df, path, sampling_rate, target_rate=250):
     data = np.array(data, dtype=np.float32)
     return data
 
+
 def process_loaded_data(dataset, seq_length, total_length, target_rate=250):
     data = []
     for sample in tqdm(range(dataset.shape[0])):
-        processed_sample = process_ecg(dataset[sample, :, :], total_length=total_length, sampling_rate=target_rate)
+        processed_sample = process_ecg(
+            dataset[sample, :, :], total_length=total_length, sampling_rate=target_rate
+        )
         norm = normalize(processed_sample, seq_length)
         data.append(norm)
 

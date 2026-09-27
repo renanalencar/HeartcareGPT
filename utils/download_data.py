@@ -8,12 +8,15 @@ import argparse
 import multiprocessing.dummy
 import os
 import posixpath
+import subprocess
+import zipfile
 
 import pandas as pd
 from tqdm import tqdm
 from wfdb.io import download
 
 PTBXL_DB = "ptb-xl"
+KAGGLE_DATASET = "mohamadkalaoun/ptb-xl"
 
 
 def download_ptbxl(dest_dir: str = "data") -> None:
@@ -40,6 +43,27 @@ def download_ptbxl(dest_dir: str = "data") -> None:
     print("Done.")
 
 
+def download_ptbxl_kaggle(dest_dir: str = "data") -> None:
+    os.makedirs(dest_dir, exist_ok=True)
+    zip_path = os.path.join(dest_dir, "ptb-xl.zip")
+
+    print(f"Downloading {KAGGLE_DATASET} from Kaggle into {dest_dir!r} ...")
+    subprocess.run(
+        ["kaggle", "datasets", "download", "-d", KAGGLE_DATASET, "-p", dest_dir],
+        check=True,
+    )
+
+    print(f"Extracting {zip_path} ...")
+    with zipfile.ZipFile(zip_path) as zf:
+        # Extrai exclusivamente a pasta de 500hz, achatando o diretório raiz do zip
+        members = [m for m in zf.infolist() if "records500/" in m.filename]
+        for member in tqdm(members, total=len(members)):
+            member.filename = member.filename[member.filename.index("records500/") :]
+            zf.extract(member, dest_dir)
+    os.remove(zip_path)
+    print("Done.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Download the PTB-XL waveform dataset."
@@ -47,5 +71,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dest", default="data", help="Destination directory (default: data)"
     )
+    parser.add_argument(
+        "--source",
+        choices=["wfdb", "kaggle"],
+        default="wfdb",
+        help="Where to download the dataset from (default: wfdb)",
+    )
     args = parser.parse_args()
-    download_ptbxl(args.dest)
+    if args.source == "kaggle":
+        download_ptbxl_kaggle(args.dest)
+    else:
+        download_ptbxl(args.dest)
